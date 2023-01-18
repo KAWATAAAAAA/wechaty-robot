@@ -22,7 +22,8 @@ router.get("/robot/getQRcode",async (ctx) => {
     /* 返回一个二维码给前端 */
     const params = ctx.request.body || {};
     const res = await robotService.create(ctx, params)
-    ctx.body = res
+    console.log(ctx.body === ctx.response.body)
+    ctx.success(res)
 })
 router.get("/robot/getContactList",async (ctx) => {
     /* 返回一个二维码给前端 */
