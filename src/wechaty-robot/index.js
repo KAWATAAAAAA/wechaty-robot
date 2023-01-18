@@ -185,11 +185,62 @@ const getStatus = async (ctx, params) => {
   return status
 }
 
-
-
+/* 获取联系人列表 */
+/* 不符合直觉的方法，老子真的是艹了，看问题👉 https://github.com/wechaty/wechaty/issues/1320 */
+const getContactList = async (ctx, params) => {
+  const instance = _getRobot(ctx, params)
+  /* 会返回所有的联系人，即使是群中的，群里边的所有群员也会返回 */
+  const list = await instance.Contact.findAll()
+  /* 过滤掉非好友*/
+  const actual = (list || []).filter(contact => !!contact.friend())
+  return actual.map(item => {
+    return {
+      id: item.id,
+      payload: item.payload
+    }
+  })
+}
+/* 获取群列表 */
+const getRoomList = async (ctx, params) => {
+  const instance = _getRobot(ctx, params)
+  const list = await instance.Room.findAll()
+  return (list || []).map(item => {
+    const {
+      payload
+    } = item
+    return {
+      id: item.id,
+      payload: {
+        id: payload.id,
+        topic: payload.topic,
+        avatar: payload.avatar,
+        ownerId: payload.ownerId,
+      },
+    }
+  })
+}
+const queryContact = async (ctx, params) => {
+  const { name } = params
+  const instance = _getRobot(ctx, params)
+  const one = await instance.Contact.find({
+    name: name
+  })
+  return one
+}
+const queryRoom = async (ctx, params) => {
+  const instance = _getRobot(ctx, params)
+  const one = await instance.Room.find({
+    params
+  })
+  return one
+}
 module.exports = {
   create,
   pending,
   logout,
-  getStatus
+  getStatus,
+  getContactList,
+  getRoomList,
+  queryContact,
+  queryRoom
 }
