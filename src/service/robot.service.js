@@ -5,6 +5,10 @@ module.exports = {
         const res = await WechatyImpl.create(ctx, params)
         return res
     },
+    async getSelfInfo(ctx, params){
+        const res = await WechatyImpl.getUserSelf(ctx, params)
+        return res
+    },
     async pending(ctx, params){
         await WechatyImpl.pending(ctx, params)
     },
@@ -14,6 +18,14 @@ module.exports = {
     },
     async getRoomList(ctx, params){
         const res = await WechatyImpl.getRoomList(ctx, params)
+        return res
+    },
+    async getContactInfo(ctx, params){
+        const res = await WechatyImpl.queryContact(ctx, params)
+        return res
+    },
+    async getRoomInfo(ctx, params){
+        const res = await WechatyImpl.queryRoom(ctx, params)
         return res
     },
     async send(ctx, params){

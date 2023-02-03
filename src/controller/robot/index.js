@@ -5,6 +5,7 @@ const robotService = require("@service/robot.service.js")
 const router = new Router()
 
 router.post("/robot/online",async (ctx) => {
+    debugger
     /* 返回一个二维码给前端 */
     ctx.body = "二维码"
 })
@@ -20,22 +21,47 @@ router.post("/robot/logout",async (ctx) => {
 })
 router.get("/robot/getQRcode",async (ctx) => {
     /* 返回一个二维码给前端 */
-    const params = ctx.request.body || {};
+    const params = ctx.request.query || {};
     const res = await robotService.create(ctx, params)
-    console.log(ctx.body === ctx.response.body)
+    ctx.success(res)
+})
+router.get("/robot/getPuppetInfo",async (ctx) => {
+    /* 返回一个二维码给前端 */
+    const params = ctx.request.query || {};
+    const res = await robotService.getSelfInfo(ctx, params)
     ctx.success(res)
 })
 router.get("/robot/getContactList",async (ctx) => {
-    /* 返回一个二维码给前端 */
+
     const params = ctx.request.query || {};
     const res = await robotService.getContactList(ctx, params)
-    ctx.body = res
+    ctx.success(res)
 })
 router.get("/robot/getRoomList",async (ctx) => {
-    /* 返回一个二维码给前端 */
+    
     const params = ctx.request.query || {};
     const res = await robotService.getRoomList(ctx, params)
-    ctx.body = res
+    ctx.success(res)
+})
+router.get("/robot/getContactInfo",async (ctx) => {
+    
+    const params = ctx.request.query || {};
+    const res = await robotService.getContactInfo(ctx, params)
+    if(!res){
+        ctx.fail(null, "查询不到指定的联系人")
+        return
+    }
+    ctx.success(res)
+})
+router.get("/robot/getRoomInfo",async (ctx) => {
+
+    const params = ctx.request.query || {};
+    const res = await robotService.getRoomInfo(ctx, params)
+    if(!res){
+        ctx.fail(null, "查询不到指定的群名称")
+        return
+    }
+    ctx.success(res)
 })
 
 router.post("/robot/send",async (ctx) => {

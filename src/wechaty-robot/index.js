@@ -18,7 +18,7 @@ const idGen = require("@/utils/id-gen.js")
 
 
 const create = async (ctx, params) => {
-  const { token } = params
+  const { token, id } = params
   const puppet = new PuppetPadlocal({
     token: token || "puppet_padlocal_6f5447f25c0c497997bbddb997348892"
   })
@@ -28,12 +28,13 @@ const create = async (ctx, params) => {
     puppet,
   })
   /* 记录机器人 */
-  const id = idGen.get()
+  // const id = idGen.get()
   ctx.xsyx.robots[id] = robot
   /* 设置监听器 */
   _listens(robot)
   /* 启动机器人 */
   await robot.start()
+
   /* 等待返回二维码链接 */
   const qrRes =  await _getQRcode(robot)
   return {
@@ -50,6 +51,9 @@ const _getRobot = (ctx, params) => {
   }
   /* 错误的情况，未找到机器人 */
   console.log("🤖️ 未找到机器人")
+  throw new Error("未找到机器人", {
+    id: id
+  })
 }
 const _getQRcode = async (instance) => {
   return new Promise((resolve) => {
@@ -162,6 +166,15 @@ const _listens = (instance) => {
   .on("error", (error) => {
     log.error(LOGPRE, `on error: ${error}`);
   })
+
+  // process.on('uncaughtException',(error) => {
+  //   // debugger
+  //   console.log(error)
+  // })
+  // process.on("unhandledRejection", (error) => {
+  //   // debugger
+  //   console.log(error)
+  // })
 }
 
 
@@ -184,6 +197,15 @@ const getStatus = async (ctx, params) => {
   const status = await instance.logonoff()
   return status
 }
+const getUserSelf = async (ctx, params) => {
+  const instance = _getRobot(ctx, params)
+  const res = await instance.userSelf()
+  return {
+    id: res.id,
+    payload: res.payload
+  }
+}
+
 
 /* 获取联系人列表 */
 /* 不符合直觉的方法，老子真的是艹了，看问题👉 https://github.com/wechaty/wechaty/issues/1320 */
@@ -225,20 +247,39 @@ const queryContact = async (ctx, params) => {
   const one = await instance.Contact.find({
     name: name
   })
-  return one
+  if(!one){
+    return
+  }
+  return {
+    id: one.id,
+    payload: one.payload
+  }
 }
 const queryRoom = async (ctx, params) => {
+  const { topic } = params
   const instance = _getRobot(ctx, params)
   const one = await instance.Room.find({
-    params
+    topic: topic
   })
-  return one
+  if(!one){
+    return
+  }
+  return {
+    id: one.id,
+    payload: {
+      avatar: one.payload.avatar,
+      id: one.payload.id,
+      ownerId: one.payload.ownerId,
+      topic: one.payload.topic,
+    }
+  }
 }
 module.exports = {
   create,
   pending,
   logout,
   getStatus,
+  getUserSelf,
   getContactList,
   getRoomList,
   queryContact,

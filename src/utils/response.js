@@ -19,7 +19,7 @@ function fail(data, msg = "fail", code = 9999) {
     }
 }
 
-const error = (code) => {
+function error(code) {
     this.response.status = code
 }
 module.exports = {
