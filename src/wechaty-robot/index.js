@@ -1,4 +1,4 @@
-const {log, ScanStatus, WechatyBuilder } = require("wechaty");
+const {log, ScanStatus, WechatyBuilder, MiniProgram } = require("wechaty");
 const {PuppetPadlocal} = require("wechaty-puppet-padlocal");
 const {dingDongBot, getMessagePayload, LOGPRE} = require("./helper.js");
 const QR = require("qrcode-terminal")
@@ -20,11 +20,11 @@ const idGen = require("@/utils/id-gen.js")
 const create = async (ctx, params) => {
   const { token, id } = params
   const puppet = new PuppetPadlocal({
-    token: token || "puppet_padlocal_6f5447f25c0c497997bbddb997348892"
+    token: token || "puppet_padlocal_a5e7e269ceb042a59b9c74f71885b7e4"
   })
 
   const robot = WechatyBuilder.build({
-    name: "PadLocalDemo1",
+    name: id,
     puppet,
   })
   /* 记录机器人 */
@@ -162,7 +162,11 @@ const _listens = (instance) => {
     }
     
   })
-
+  // .on("ready", async () => {
+  //   let res = await instance.Room.findAll()
+  //   console.log("---- 所有群 -----")
+  //   console.log(res)
+  // })
   .on("error", (error) => {
     log.error(LOGPRE, `on error: ${error}`);
   })
@@ -225,6 +229,7 @@ const getContactList = async (ctx, params) => {
 /* 获取群列表 */
 const getRoomList = async (ctx, params) => {
   const instance = _getRobot(ctx, params)
+  await instance.ready()
   const list = await instance.Room.findAll()
   return (list || []).map(item => {
     const {
@@ -241,7 +246,7 @@ const getRoomList = async (ctx, params) => {
     }
   })
 }
-const queryContact = async (ctx, params) => {
+const queryContact = async (ctx, params, getInstance = false) => {
   const { name } = params
   const instance = _getRobot(ctx, params)
   const one = await instance.Contact.find({
@@ -250,19 +255,26 @@ const queryContact = async (ctx, params) => {
   if(!one){
     return
   }
+  if(getInstance){
+    return one
+  }
   return {
     id: one.id,
     payload: one.payload
   }
 }
-const queryRoom = async (ctx, params) => {
+const queryRoom = async (ctx, params, getInstance = false) => {
   const { topic } = params
   const instance = _getRobot(ctx, params)
+  await instance.ready()
   const one = await instance.Room.find({
     topic: topic
   })
   if(!one){
     return
+  }
+  if(getInstance){
+    return one
   }
   return {
     id: one.id,
@@ -274,6 +286,37 @@ const queryRoom = async (ctx, params) => {
     }
   }
 }
+const mpWrapper = (instance, params) => {
+  const miniProgram = new instance.MiniProgram({
+      username: 'gh_ff48e5a4d9bc@app',
+      iconUrl: 'http://wx.qlogo.cn/mmhead/Q3auHgzwzM4PD4Ax636BGuURdTktic9A1WwII31oicpw9cX7QqfoRRiaQ/96',
+      description: '兴盛优选',
+      title: '【兴盛优选】麓谷总部店',//'郁金香 1盆 简易盆 高约25-30cm 冠幅约15-20cm 颜色随机',
+      thumbUrl: 'https://image.xsyxsc.com/item/productShare/productDetailNone_new2023_0107.png?x-oss-process=image/watermark,image_c3VwcGx5L2l0ZW0vZGFpbHlQdXNoLzIwMjMwMTA2LzF6UG4wZUZaVWkuanBnP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMjM0LGhfMjM0LGxpbWl0XzAsbV9maXhlZC9yb3VuZGVkLWNvcm5lcnMscl84,g_nw,x_32,y_34/watermark,color_FF0000,size_30,g_nw,x_309,y_88,text_wqU=,type_d3F5LW1pY3JvaGVp/watermark,s_100,color_FF0000,size_48,g_nw,x_333,y_74,text_MTkuOTk=,type_ZmFuZ3poZW5naGVpdGk/watermark,color_FF0000,size_30,g_nw,x_393,y_141,text_MS445LiH,type_ZmFuZ3poZW5naGVpdGk',
+      pagePath: "/subMain/main/index",
+      // pagePath: "subMain/main/index?storeId=66880000043098&p=%7B%22c%22:600,%22s%22:66880000043098,%22device_id%22:%222fb28ce6ad1db4a4%22,%22f%22:%22personal_wechat%22,%22c_type%22:%22home%22,%22task_id%22:230103000434780%7D",
+      // pagePath: "/pages/home/productDetail/productDetail?skuSn=028431103&spuSn=20230107910464101421803&storeId=66880000043098&p=%7B%22c%22:600,%22s%22:66880000043098,%22device_id%22:%22037b346822ae7aa3%22,%22f%22:%22personal_wechat%22,%22c_type%22:%22product%22,%22task_id%22:230112000153524%7D",
+  });
+  return miniProgram
+}
+const MessageType = {
+  TEXT: 1,
+  IMAGE: 2,
+  VOICE: 3,
+  VIDEO: 4,
+  MINI_PROGRAM: 5,
+};
+const sendMessage = async (instance, to, message) => {
+  const types = {
+      [MessageType.TEXT]: async () => {
+          await to.say(message.data)
+      },
+      [MessageType.MINI_PROGRAM]: async () => {
+          await to.say(mpWrapper(instance, message))
+      }
+  }
+  return types[message.type]()
+}
 module.exports = {
   create,
   pending,
@@ -283,5 +326,6 @@ module.exports = {
   getContactList,
   getRoomList,
   queryContact,
-  queryRoom
+  queryRoom,
+  sendMessage,
 }

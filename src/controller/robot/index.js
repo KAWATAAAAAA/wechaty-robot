@@ -17,7 +17,12 @@ router.post("/robot/pending",async (ctx) => {
 })
 router.post("/robot/logout",async (ctx) => {
     /* 从post参数获取机器人id，从 koa的context中 找到对应机器人map，通过 map[id] 的方式操作机器人--离线 */
-    ctx.body = "二维码"
+    const params = ctx.request.body;
+    await robotService.logout(ctx, params)
+    ctx.success({
+        data: true,
+        msg: "退出登录成功"
+    })
 })
 router.get("/robot/getQRcode",async (ctx) => {
     /* 返回一个二维码给前端 */
@@ -67,8 +72,8 @@ router.get("/robot/getRoomInfo",async (ctx) => {
 router.post("/robot/send",async (ctx) => {
     /* 从post参数获取机器人id，从 koa的context中 找到对应机器人map，通过 map[id] 的方式操作机器人--发送一条消息 */
     const params = ctx.request.body || {};
-    const res = await robotService.send(ctx, params)
-    ctx.body = "发送成功"
+    const [res, msg] = await robotService.send(ctx, params)
+    ctx.success(res, msg)
 })
 
 module.exports = router

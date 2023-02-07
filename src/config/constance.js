@@ -5,3 +5,5 @@ module.exports = {
     appname: "wechaty-robot-test",
     version: pkg.version,
 }
+
+
